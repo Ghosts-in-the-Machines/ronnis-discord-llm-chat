@@ -1,8 +1,12 @@
 import json
-import os
 import re
 from pathlib import Path
 from typing import Any
+
+try:
+    from .st_card_exporter import extract_character_card
+except ImportError:
+    from st_card_exporter import extract_character_card
 
 
 DISABLED_VALUES = {"", "none", "null", "false", "0", "off"}
@@ -29,11 +33,11 @@ class CharacterCard:
 
     def load(self) -> None:
         self.data = {}
-        if not self.path or not self.path.exists() or self.path.suffix.lower() != ".json":
+        if not self.path or not self.path.exists():
             return
         try:
-            raw = json.loads(self.path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+            raw = extract_character_card(self.path)
+        except Exception:
             return
 
         if isinstance(raw, dict) and isinstance(raw.get("data"), dict):

@@ -15,7 +15,6 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from config import (
-    API_BASE_URL,
     API_KEY,
     CHAT_TEMP,
     CTX_LIMIT,
@@ -27,6 +26,7 @@ from config import (
     NAME,
     PULSE_BUDGET,
     PULSE_INTERVAL,
+    chat_completions_url,
 )
 
 try:
@@ -152,7 +152,7 @@ def _call_llm(messages: list[dict[str, str]]) -> str:
         headers["Authorization"] = f"Bearer {API_KEY}"
 
     request = urllib.request.Request(
-        f"{API_BASE_URL}/v1/chat/completions",
+        chat_completions_url(),
         data=body,
         headers=headers,
         method="POST",

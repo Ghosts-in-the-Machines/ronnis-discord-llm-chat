@@ -10,7 +10,7 @@ SRC_ROOT = Path(__file__).resolve().parents[1]
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
-from config import API_BASE_URL, API_KEY, CHAT_TEMP, CTX_LIMIT, DATA_ROOT, HUMAN, LOREBOOK_ROOT, MODEL
+from config import API_KEY, CHAT_TEMP, CTX_LIMIT, DATA_ROOT, HUMAN, LOREBOOK_ROOT, MODEL, chat_completions_url
 
 try:
     from .lore_parser import Lorebook
@@ -88,7 +88,7 @@ def _call_llm(
         headers["Authorization"] = f"Bearer {API_KEY}"
 
     request = urllib.request.Request(
-        f"{API_BASE_URL}/v1/chat/completions",
+        chat_completions_url(),
         data=json.dumps(payload).encode("utf-8"),
         headers=headers,
         method="POST",

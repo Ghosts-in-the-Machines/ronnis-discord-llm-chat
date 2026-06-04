@@ -1,7 +1,23 @@
 import os
 from pathlib import Path
 
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    def load_dotenv() -> bool:
+        env_path = Path(".env")
+        if not env_path.exists():
+            return False
+        for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            if key and key not in os.environ:
+                os.environ[key] = value
+        return False
 
 
 load_dotenv()
@@ -73,3 +89,16 @@ REPLY_TO_BOTS = _get_bool("REPLY_TO_BOTS", False) # MAKE SURE THIS IS TRUE IF YO
 
 def get_discord_guild_ids() -> list[int]:
     return list(DISCORD_GUILD_IDS)
+
+
+def chat_completions_url() -> str:
+    base = API_BASE_URL.rstrip("/")
+    if base.endswith("/chat/completions"):
+        return base
+    if "api.deepseek.com" in base and base.endswith("/v1"):
+        return f"{base[:-3]}/chat/completions"
+    if "api.deepseek.com" in base:
+        return f"{base}/chat/completions"
+    if base.endswith("/v1"):
+        return f"{base}/chat/completions"
+    return f"{base}/v1/chat/completions"

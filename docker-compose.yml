@@ -1,0 +1,24 @@
+services:
+  discord-llm-chat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: discord-llm-chat:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATA_ROOT: /app/data
+      # Set these in .env when enabled:
+      # CHARACTER_CARD=/app/character_cards/card.png
+      # LOREBOOK_ROOT=/app/lorebooks
+      # MEMORY_PROVIDER=local:/app/memory/memories.json
+    volumes:
+      # Discord JSONL chat logs, wake files, worker state, and queued replies.
+      - ./data:/app/data
+      # Optional SillyTavern character card JSON or PNG files.
+      - ./character_cards:/app/character_cards:ro
+      # Optional lorebook JSON files.
+      - ./lorebooks:/app/lorebooks:ro
+      # Optional local memory files.
+      - ./memory:/app/memory:ro

@@ -110,11 +110,22 @@ API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000").rstrip("/")
 API_KEY = os.getenv("API_KEY", os.getenv("OPENAI_API_KEY", "")).strip()
 MODEL = os.getenv("MODEL", "gpt-4o-mini")
 _raw_api_provider = os.getenv("API_PROVIDER", "auto").strip().lower()
-API_PROVIDER = (
-    "anthropic"
-    if _raw_api_provider == "anthropic" or (_raw_api_provider == "auto" and "api.anthropic.com" in API_BASE_URL)
-    else "openai"
-)
+OPENROUTER_HTTP_REFERER = os.getenv("OPENROUTER_HTTP_REFERER", "https://discord-llm-chat.local").strip()
+OPENROUTER_X_TITLE = os.getenv("OPENROUTER_X_TITLE", "Ronni's Discord LLM Chat").strip()
+
+
+def _detect_api_provider(provider: str, base_url: str) -> str:
+    if provider != "auto":
+        return provider if provider in {"openai", "anthropic", "openrouter"} else "openai"
+    base = base_url.lower()
+    if "openrouter.ai" in base:
+        return "openrouter"
+    if "api.anthropic.com" in base:
+        return "anthropic"
+    return "openai"
+
+
+API_PROVIDER = _detect_api_provider(_raw_api_provider, API_BASE_URL)
 
 _raw_lorebook_root = os.getenv("LOREBOOK_ROOT", "none").strip()
 LOREBOOK_ROOT = None if _raw_lorebook_root.lower() in {"", "none", "null", "false", "0", "off"} else _raw_lorebook_root

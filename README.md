@@ -21,6 +21,25 @@ run.bat
 
 The scripts create a virtual environment, install dependencies, and start both the Discord handler and worker.
 
+## Docker
+
+Build and run with Compose:
+
+```bash
+docker compose up -d --build
+```
+
+Compose reads `.env` through `env_file` and mounts runtime data into the container:
+
+```text
+./data -> /app/data
+./character_cards -> /app/character_cards
+./lorebooks -> /app/lorebooks
+./memory -> /app/memory
+```
+
+For Docker, set mounted paths in `.env`, for example `CHARACTER_CARD=/app/character_cards/card.png`, `LOREBOOK_ROOT=/app/lorebooks`, or `MEMORY_PROVIDER=local:/app/memory/memories.json`.
+
 ## How It Works
 
 The Discord handler listens for messages and appends them to local JSONL logs in `DATA_ROOT`.
@@ -28,6 +47,8 @@ The Discord handler listens for messages and appends them to local JSONL logs in
 The worker polls for wake signals, checks each channel for messages newer than the last processed Discord message ID, builds a prompt, calls your LLM API, and queues replies back to Discord.
 
 Generation settings such as `MAX_TOKENS`, `SEED`, `TOP_P`, `TOP_K`, penalties, character cards, lorebooks, and memory hooks are configured in `.env`.
+
+`API_PROVIDER` can be `openai`, `anthropic`, `openrouter`, or `auto`. `auto` detects `openrouter.ai` as OpenRouter and `api.anthropic.com` as native Anthropic. OpenRouter uses the OpenAI-compatible payload with `HTTP-Referer` and `X-Title` headers from `.env`.
 
 For native Claude, set `API_PROVIDER=anthropic`, `API_BASE_URL=https://api.anthropic.com`, `API_KEY` to your Anthropic key, and `MODEL` to a Claude model name. OpenAI-compatible Claude proxies should stay on `API_PROVIDER=openai`.
 

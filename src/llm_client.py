@@ -2,7 +2,16 @@ import json
 import urllib.error
 import urllib.request
 
-from config import API_KEY, API_PROVIDER, MODEL, anthropic_messages_url, chat_completions_url, generation_params
+from config import (
+    API_KEY,
+    API_PROVIDER,
+    MODEL,
+    OPENROUTER_HTTP_REFERER,
+    OPENROUTER_X_TITLE,
+    anthropic_messages_url,
+    chat_completions_url,
+    generation_params,
+)
 
 
 def _split_system_messages(messages: list[dict[str, str]]) -> tuple[str | None, list[dict[str, str]]]:
@@ -44,25 +53,60 @@ def _post_json(url: str, payload: dict, headers: dict[str, str]) -> dict:
         return json.loads(response.read().decode("utf-8"))
 
 
-def _call_openai_compatible(
+def _openai_compatible_payload(
     messages: list[dict[str, str]],
     temperature: float | None = None,
     max_tokens: int | None = None,
-) -> str:
+) -> dict:
     payload = {
         "model": MODEL,
         "messages": messages,
     }
     payload.update(generation_params(temperature=temperature, max_tokens=max_tokens))
+    return payload
+
+
+def _openai_compatible_headers(extra_headers: dict[str, str] | None = None) -> dict[str, str]:
     headers = {"Content-Type": "application/json"}
     if API_KEY:
         headers["Authorization"] = f"Bearer {API_KEY}"
+    if extra_headers:
+        headers.update(extra_headers)
+    return headers
 
-    data = _post_json(chat_completions_url(), payload, headers)
+
+def _parse_openai_compatible_response(data: dict) -> str:
     choices = data.get("choices", [])
     if not choices:
         return ""
     return str(choices[0].get("message", {}).get("content", "")).strip()
+
+
+def _call_openai_compatible(
+    messages: list[dict[str, str]],
+    temperature: float | None = None,
+    max_tokens: int | None = None,
+) -> str:
+    payload = _openai_compatible_payload(messages, temperature=temperature, max_tokens=max_tokens)
+    headers = _openai_compatible_headers()
+    data = _post_json(chat_completions_url(), payload, headers)
+    return _parse_openai_compatible_response(data)
+
+
+def _call_openrouter(
+    messages: list[dict[str, str]],
+    temperature: float | None = None,
+    max_tokens: int | None = None,
+) -> str:
+    payload = _openai_compatible_payload(messages, temperature=temperature, max_tokens=max_tokens)
+    headers = _openai_compatible_headers(
+        {
+            "HTTP-Referer": OPENROUTER_HTTP_REFERER,
+            "X-Title": OPENROUTER_X_TITLE,
+        }
+    )
+    data = _post_json(chat_completions_url(), payload, headers)
+    return _parse_openai_compatible_response(data)
 
 
 def _call_anthropic(
@@ -99,10 +143,14 @@ def call_llm(
     temperature: float | None = None,
     max_tokens: int | None = None,
 ) -> str:
+    provider_map = {
+        "openai": _call_openai_compatible,
+        "anthropic": _call_anthropic,
+        "openrouter": _call_openrouter,
+    }
     try:
-        if API_PROVIDER == "anthropic":
-            return _call_anthropic(messages, temperature=temperature, max_tokens=max_tokens)
-        return _call_openai_compatible(messages, temperature=temperature, max_tokens=max_tokens)
+        caller = provider_map.get(API_PROVIDER, _call_openai_compatible)
+        return caller(messages, temperature=temperature, max_tokens=max_tokens)
     except urllib.error.HTTPError as exc:
         detail = _read_error(exc)
         raise RuntimeError(f"LLM endpoint returned HTTP {exc.code}: {detail}") from exc

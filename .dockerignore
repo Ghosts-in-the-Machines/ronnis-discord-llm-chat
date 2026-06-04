@@ -1,0 +1,12 @@
+.git
+.github
+.env
+data
+character_cards
+lorebooks
+memory
+venv
+.venv
+__pycache__
+*.pyc
+.pytest_cache

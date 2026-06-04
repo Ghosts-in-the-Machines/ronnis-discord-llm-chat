@@ -65,5 +65,7 @@ class Lorebook:
         wrapped = []
         for item in matched:
             safe = re.sub(r"\s+", " ", item).strip()
+            safe = safe.replace("[/SUPPLEMENTAL CONTEXT]", "[/ SUPPLEMENTAL CONTEXT]")
+            safe = safe.replace("[SUPPLEMENTAL CONTEXT]", "[ SUPPLEMENTAL CONTEXT]")
             wrapped.append(f"[SUPPLEMENTAL CONTEXT]\n{safe}\n[/SUPPLEMENTAL CONTEXT]")
         return "\n\n".join(wrapped)

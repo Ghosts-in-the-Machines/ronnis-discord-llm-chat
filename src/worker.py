@@ -110,7 +110,7 @@ def _recent_messages(messages: list[dict[str, Any]], limit: int = 24) -> list[di
     return messages[-limit:]
 
 
-def _build_prompt(chat_id: str, messages: list[dict[str, Any]], lorebook: Lorebook) -> list[dict[str, str]]:
+def _build_prompt(chat_id: str, messages: list[dict[str, Any]], lorebook: Lorebook | None) -> list[dict[str, str]]:
     transcript_lines = []
     for msg in _recent_messages(messages):
         role = msg.get("role", "user")
@@ -119,7 +119,7 @@ def _build_prompt(chat_id: str, messages: list[dict[str, Any]], lorebook: Lorebo
         transcript_lines.append(f"[{role}][{author}] {body}")
 
     transcript = "\n".join(transcript_lines)
-    lore = lorebook.query(transcript)
+    lore = lorebook.query(transcript) if lorebook else ""
     user_content = [f"Discord chat_id: {chat_id}"]
     if lore:
         user_content.append(lore)
@@ -200,7 +200,7 @@ def pulse() -> None:
         _save_state_unlocked(state)
 
     try:
-        lorebook = Lorebook(LOREBOOK_ROOT)
+        lorebook = Lorebook(LOREBOOK_ROOT) if LOREBOOK_ROOT else None
         processed = 0
         for path in _chat_files():
             if processed >= MAX_STEPS:

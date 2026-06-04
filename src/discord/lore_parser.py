@@ -5,14 +5,15 @@ from typing import Iterable
 
 
 class Lorebook:
-    def __init__(self, path: str = "lorebooks"):
-        self.path = Path(path)
+    def __init__(self, path: str | None = "lorebooks"):
+        self.enabled = path is not None and str(path).strip().lower() not in {"", "none", "null", "false", "0", "off"}
+        self.path = Path(path) if self.enabled else None
         self.entries: list[tuple[str, str]] = []
         self.reload()
 
     def reload(self) -> None:
         self.entries = []
-        if not self.path.exists():
+        if not self.enabled or self.path is None or not self.path.exists():
             return
 
         for file_path in sorted(self.path.glob("*.json")):

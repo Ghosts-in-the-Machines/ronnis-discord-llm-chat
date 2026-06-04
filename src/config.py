@@ -66,7 +66,8 @@ API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000").rstrip("/")
 API_KEY = os.getenv("API_KEY", os.getenv("OPENAI_API_KEY", "")).strip()
 MODEL = os.getenv("MODEL", "gpt-4o-mini") 
 
-LOREBOOK_ROOT = os.getenv("LOREBOOK_ROOT", "lorebooks")
+_raw_lorebook_root = os.getenv("LOREBOOK_ROOT", "none").strip()
+LOREBOOK_ROOT = None if _raw_lorebook_root.lower() in {"", "none", "null", "false", "0", "off"} else _raw_lorebook_root
 REPLY_TO_BOTS = _get_bool("REPLY_TO_BOTS", False) # MAKE SURE THIS IS TRUE IF YOU WANT YOUR AI TO TALK TO OTHER AI!! default false for security
 
 

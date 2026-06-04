@@ -52,7 +52,7 @@ def _build_discord_generation_messages(chat_id: str, messages: list[dict[str, An
         lines.append(f"[{role}][{author}][user_id={author_id}][status={status}] {body}")
 
     transcript = "\n".join(lines)
-    lore = Lorebook(LOREBOOK_ROOT).query(transcript)
+    lore = Lorebook(LOREBOOK_ROOT).query(transcript) if LOREBOOK_ROOT else ""
     content = [f"Discord chat_id: {chat_id}"]
     if lore:
         content.append(lore)

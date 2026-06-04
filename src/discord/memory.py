@@ -23,6 +23,7 @@ from config import (
     SUPABASE_TABLE,
     SUPABASE_TEXT_COLUMN,
     SUPABASE_URL,
+    USE_MEM,
 )
 
 
@@ -174,6 +175,8 @@ def _query_local_json(path: str, text: str) -> list[str]:
 
 
 def query_memories(text: str) -> list[str]:
+    if not USE_MEM:
+        return []
     provider = MEMORY_PROVIDER.lower()
     if provider in DISABLED_VALUES:
         return []

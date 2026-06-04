@@ -89,6 +89,7 @@ REPLY_TO_BOTS = _get_bool("REPLY_TO_BOTS", False) # MAKE SURE THIS IS TRUE IF YO
 _raw_character_card = os.getenv("CHARACTER_CARD", "none").strip()
 CHARACTER_CARD = None if _raw_character_card.lower() in {"", "none", "null", "false", "0", "off"} else _raw_character_card
 
+USE_MEM = _get_bool("USE_MEM", False)
 MEMORY_PROVIDER = os.getenv("MEMORY_PROVIDER", "none").strip().lower()
 MEMORY_TOP_K = _get_int("MEMORY_TOP_K", 5)
 MEMORY_MIN_SCORE = _get_float("MEMORY_MIN_SCORE", 0.0)

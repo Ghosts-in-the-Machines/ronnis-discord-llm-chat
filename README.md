@@ -1,11 +1,32 @@
-Allows you to talk to a LLM at a specific API endpoint through Discord channels, with optional ST style character cards, lorebooks, or memory hooks. Channels/servers only.
+# Ronni's Discord LLM Chat
 
-Pulses every 120 seconds (configurable) to check for new Discord messages.
+Talk to an OpenAI-compatible LLM endpoint through Discord channels.
 
-INSTRUCTIONS:
+This is a standalone Discord bridge with optional SillyTavern-style character cards, lorebooks, and memory hooks. It is designed for channel/server chat, not DMs.
 
-    Configure Identity & Access: Copy .env.example to .env, then populate your DISCORD_BOT_TOKEN and LLM_API_KEY. Without these, the system remains silent. Optionally attach a path to your existing character card, lorebooks, or mem API hook.
+## Setup
 
-    Initialize the Environment: Run the startup script for your OS (./run.sh or run.bat). This creates a virtual environment and installs all dependencies automatically.
+1. Copy `.env.example` to `.env`.
+2. Fill in `DISCORD_BOT_TOKEN`, `API_BASE_URL`, `API_KEY`, and `MODEL`.
+3. Optionally set `CHARACTER_CARD`, `LOREBOOK_ROOT`, and memory settings.
+4. Run the startup script for your OS:
 
-    Verify Handshake: Watch the terminal for [DISCORD] Anchored to... followed by [SYSTEM] Worker starting. If you see those, the signal is live.
+```bash
+./run.sh
+```
+
+```bat
+run.bat
+```
+
+The scripts create a virtual environment, install dependencies, and start both the Discord handler and worker.
+
+## How It Works
+
+The Discord handler listens for messages and appends them to local JSONL logs in `DATA_ROOT`.
+
+The worker polls for wake signals, checks each channel for messages newer than the last processed Discord message ID, builds a prompt, calls your LLM API, and queues replies back to Discord.
+
+Generation settings such as `MAX_TOKENS`, `SEED`, `TOP_P`, `TOP_K`, penalties, character cards, lorebooks, and memory hooks are configured in `.env`.
+
+Made by Ronni & Val.

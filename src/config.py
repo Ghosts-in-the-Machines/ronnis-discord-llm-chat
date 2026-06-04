@@ -86,6 +86,29 @@ _raw_lorebook_root = os.getenv("LOREBOOK_ROOT", "none").strip()
 LOREBOOK_ROOT = None if _raw_lorebook_root.lower() in {"", "none", "null", "false", "0", "off"} else _raw_lorebook_root
 REPLY_TO_BOTS = _get_bool("REPLY_TO_BOTS", False) # MAKE SURE THIS IS TRUE IF YOU WANT YOUR AI TO TALK TO OTHER AI!! default false for security
 
+_raw_character_card = os.getenv("CHARACTER_CARD", "none").strip()
+CHARACTER_CARD = None if _raw_character_card.lower() in {"", "none", "null", "false", "0", "off"} else _raw_character_card
+
+MEMORY_PROVIDER = os.getenv("MEMORY_PROVIDER", "none").strip().lower()
+MEMORY_TOP_K = _get_int("MEMORY_TOP_K", 5)
+MEMORY_MIN_SCORE = _get_float("MEMORY_MIN_SCORE", 0.0)
+MEMORY_API_URL = os.getenv("MEMORY_API_URL", "").strip()
+MEMORY_API_KEY = os.getenv("MEMORY_API_KEY", "").strip()
+
+QDRANT_URL = os.getenv("QDRANT_URL", "").rstrip("/")
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY", "").strip()
+QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "").strip()
+QDRANT_VECTOR_NAME = os.getenv("QDRANT_VECTOR_NAME", "").strip()
+EMBEDDING_API_URL = os.getenv("EMBEDDING_API_URL", "").strip()
+EMBEDDING_API_KEY = os.getenv("EMBEDDING_API_KEY", API_KEY).strip()
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "").strip()
+
+SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY", "").strip()
+SUPABASE_TABLE = os.getenv("SUPABASE_TABLE", "memories").strip()
+SUPABASE_TEXT_COLUMN = os.getenv("SUPABASE_TEXT_COLUMN", "content").strip()
+SUPABASE_RPC = os.getenv("SUPABASE_RPC", "").strip()
+
 
 def get_discord_guild_ids() -> list[int]:
     return list(DISCORD_GUILD_IDS)

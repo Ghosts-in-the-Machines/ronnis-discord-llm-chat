@@ -1,8 +1,5 @@
-import json
 import os
 import sys
-import urllib.error
-import urllib.request
 from pathlib import Path
 from typing import Any
 
@@ -10,7 +7,8 @@ SRC_ROOT = Path(__file__).resolve().parents[1]
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
-from config import API_KEY, CHARACTER_CARD, CHAT_TEMP, CTX_LIMIT, DATA_ROOT, HUMAN, LOREBOOK_ROOT, MAX_TOKENS, MODEL, chat_completions_url, generation_params
+from config import CHARACTER_CARD, CHAT_TEMP, CTX_LIMIT, DATA_ROOT, HUMAN, LOREBOOK_ROOT, MAX_TOKENS
+from llm_client import call_llm
 
 try:
     from .character_card import CharacterCard
@@ -89,32 +87,10 @@ def _call_llm(
     temperature: float = CHAT_TEMP,
     max_tokens: int = MAX_TOKENS,
 ) -> str:
-    payload = {
-        "model": MODEL,
-        "messages": messages,
-    }
-    payload.update(generation_params(temperature=temperature, max_tokens=max_tokens))
-    headers = {"Content-Type": "application/json"}
-    if API_KEY:
-        headers["Authorization"] = f"Bearer {API_KEY}"
-
-    request = urllib.request.Request(
-        chat_completions_url(),
-        data=json.dumps(payload).encode("utf-8"),
-        headers=headers,
-        method="POST",
-    )
     try:
-        with urllib.request.urlopen(request, timeout=300) as response:
-            data = json.loads(response.read().decode("utf-8"))
-    except urllib.error.HTTPError as exc:
-        detail = exc.read().decode("utf-8", errors="replace")
-        return f"[error: LLM endpoint returned HTTP {exc.code}: {detail}]"
-
-    choices = data.get("choices", [])
-    if not choices:
-        return ""
-    return str(choices[0].get("message", {}).get("content", "")).strip()
+        return call_llm(messages, temperature=temperature, max_tokens=max_tokens)
+    except RuntimeError as exc:
+        return f"[error: {exc}]"
 
 
 def discord_read(chat_id: str, limit: int = 5, token_budget: int | None = None) -> dict:

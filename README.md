@@ -1,6 +1,6 @@
 # Ronni's Discord LLM Chat
 
-Talk to an OpenAI-compatible LLM endpoint through Discord channels.
+Talk to an OpenAI-compatible or Anthropic Claude LLM endpoint through Discord channels.
 
 This is a standalone Discord bridge with optional SillyTavern-style character cards, lorebooks, and memory hooks. It is designed for channel/server chat, not DMs.
 
@@ -28,5 +28,7 @@ The Discord handler listens for messages and appends them to local JSONL logs in
 The worker polls for wake signals, checks each channel for messages newer than the last processed Discord message ID, builds a prompt, calls your LLM API, and queues replies back to Discord.
 
 Generation settings such as `MAX_TOKENS`, `SEED`, `TOP_P`, `TOP_K`, penalties, character cards, lorebooks, and memory hooks are configured in `.env`.
+
+For native Claude, set `API_PROVIDER=anthropic`, `API_BASE_URL=https://api.anthropic.com`, `API_KEY` to your Anthropic key, and `MODEL` to a Claude model name. OpenAI-compatible Claude proxies should stay on `API_PROVIDER=openai`.
 
 Made by Ronni & Val.

@@ -108,7 +108,13 @@ NAME = os.getenv("NAME", "discord-llm-worker")
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000").rstrip("/")
 API_KEY = os.getenv("API_KEY", os.getenv("OPENAI_API_KEY", "")).strip()
-MODEL = os.getenv("MODEL", "gpt-4o-mini") 
+MODEL = os.getenv("MODEL", "gpt-4o-mini")
+_raw_api_provider = os.getenv("API_PROVIDER", "auto").strip().lower()
+API_PROVIDER = (
+    "anthropic"
+    if _raw_api_provider == "anthropic" or (_raw_api_provider == "auto" and "api.anthropic.com" in API_BASE_URL)
+    else "openai"
+)
 
 _raw_lorebook_root = os.getenv("LOREBOOK_ROOT", "none").strip()
 LOREBOOK_ROOT = None if _raw_lorebook_root.lower() in {"", "none", "null", "false", "0", "off"} else _raw_lorebook_root
@@ -154,6 +160,15 @@ def chat_completions_url() -> str:
     if base.endswith("/v1"):
         return f"{base}/chat/completions"
     return f"{base}/v1/chat/completions"
+
+
+def anthropic_messages_url() -> str:
+    base = API_BASE_URL.rstrip("/")
+    if base.endswith("/messages"):
+        return base
+    if base.endswith("/v1"):
+        return f"{base}/messages"
+    return f"{base}/v1/messages"
 
 
 def generation_params(

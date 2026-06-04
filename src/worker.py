@@ -4,8 +4,6 @@ import os
 import signal
 import sys
 import time
-import urllib.error
-import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -15,21 +13,17 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from config import (
-    API_KEY,
-    CHAT_TEMP,
     CTX_LIMIT,
     DATA_ROOT,
     HUMAN,
     CHARACTER_CARD,
     LOREBOOK_ROOT,
     MAX_STEPS,
-    MODEL,
     NAME,
     PULSE_BUDGET,
     PULSE_INTERVAL,
-    chat_completions_url,
-    generation_params,
 )
+from llm_client import call_llm
 
 try:
     from src.discord.character_card import CharacterCard
@@ -159,33 +153,7 @@ def _build_prompt(
 
 
 def _call_llm(messages: list[dict[str, str]]) -> str:
-    payload = {
-        "model": MODEL,
-        "messages": messages,
-    }
-    payload.update(generation_params())
-    body = json.dumps(payload).encode("utf-8")
-    headers = {"Content-Type": "application/json"}
-    if API_KEY:
-        headers["Authorization"] = f"Bearer {API_KEY}"
-
-    request = urllib.request.Request(
-        chat_completions_url(),
-        data=body,
-        headers=headers,
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(request, timeout=300) as response:
-            data = json.loads(response.read().decode("utf-8"))
-    except urllib.error.HTTPError as exc:
-        detail = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"LLM endpoint returned HTTP {exc.code}: {detail}") from exc
-
-    choices = data.get("choices", [])
-    if not choices:
-        return ""
-    return str(choices[0].get("message", {}).get("content", "")).strip()
+    return call_llm(messages)
 
 
 def _queue_reply(chat_id: str, content: str) -> None:

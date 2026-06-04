@@ -16,9 +16,10 @@ COPY src ./src
 COPY .env.example README.md LICENSE ./
 COPY docker-entrypoint.sh /usr/local/bin/discord-llm-chat
 
-RUN chmod +x /usr/local/bin/discord-llm-chat \
+RUN sed -i 's/\r$//' /usr/local/bin/discord-llm-chat \
+    && chmod +x /usr/local/bin/discord-llm-chat \
     && mkdir -p /app/data /app/lorebooks /app/character_cards /app/memory
 
 VOLUME ["/app/data", "/app/lorebooks", "/app/character_cards", "/app/memory"]
 
-ENTRYPOINT ["discord-llm-chat"]
+ENTRYPOINT ["sh", "/usr/local/bin/discord-llm-chat"]

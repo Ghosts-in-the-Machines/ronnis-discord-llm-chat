@@ -28,6 +28,7 @@ from config import (
     PULSE_BUDGET,
     PULSE_INTERVAL,
     chat_completions_url,
+    generation_params,
 )
 
 try:
@@ -161,9 +162,8 @@ def _call_llm(messages: list[dict[str, str]]) -> str:
     payload = {
         "model": MODEL,
         "messages": messages,
-        "temperature": CHAT_TEMP,
-        "max_tokens": 1200,
     }
+    payload.update(generation_params())
     body = json.dumps(payload).encode("utf-8")
     headers = {"Content-Type": "application/json"}
     if API_KEY:

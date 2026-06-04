@@ -10,7 +10,7 @@ SRC_ROOT = Path(__file__).resolve().parents[1]
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
-from config import API_KEY, CHARACTER_CARD, CHAT_TEMP, CTX_LIMIT, DATA_ROOT, HUMAN, LOREBOOK_ROOT, MODEL, chat_completions_url
+from config import API_KEY, CHARACTER_CARD, CHAT_TEMP, CTX_LIMIT, DATA_ROOT, HUMAN, LOREBOOK_ROOT, MAX_TOKENS, MODEL, chat_completions_url, generation_params
 
 try:
     from .character_card import CharacterCard
@@ -87,14 +87,13 @@ def _build_discord_generation_messages(chat_id: str, messages: list[dict[str, An
 def _call_llm(
     messages: list[dict[str, str]],
     temperature: float = CHAT_TEMP,
-    max_tokens: int = 1200,
+    max_tokens: int = MAX_TOKENS,
 ) -> str:
     payload = {
         "model": MODEL,
         "messages": messages,
-        "temperature": temperature,
-        "max_tokens": max_tokens,
     }
+    payload.update(generation_params(temperature=temperature, max_tokens=max_tokens))
     headers = {"Content-Type": "application/json"}
     if API_KEY:
         headers["Authorization"] = f"Bearer {API_KEY}"
@@ -143,7 +142,7 @@ def discord_chat(
     limit: int = 12,
     token_budget: int = 10000,
     temperature: float = CHAT_TEMP,
-    max_tokens: int = 1200,
+    max_tokens: int = MAX_TOKENS,
 ) -> dict:
     """Generate and queue a Discord reply from local chat history."""
     ctx = discord_read(chat_id=chat_id, limit=limit, token_budget=token_budget)
@@ -172,7 +171,7 @@ def discord_send(
     limit: int = 12,
     token_budget: int = 10000,
     temperature: float = CHAT_TEMP,
-    max_tokens: int = 1200,
+    max_tokens: int = MAX_TOKENS,
     acknowledge_only: bool | None = None,
     content: str | None = None,
     generate: bool | None = None,

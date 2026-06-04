@@ -43,6 +43,26 @@ def _get_float(name: str, default: float) -> float:
         return default
 
 
+def _get_optional_int(name: str) -> int | None:
+    value = os.getenv(name, "").strip()
+    if not value:
+        return None
+    try:
+        return int(value)
+    except ValueError:
+        return None
+
+
+def _get_optional_float(name: str) -> float | None:
+    value = os.getenv(name, "").strip()
+    if not value:
+        return None
+    try:
+        return float(value)
+    except ValueError:
+        return None
+
+
 def _get_bool(name: str, default: bool = False) -> bool:
     value = os.getenv(name, "").strip().lower()
     if not value:
@@ -71,6 +91,14 @@ MAX_STEPS = _get_int("MAX_STEPS", 5)
 PULSE_BUDGET = _get_int("PULSE_BUDGET", MAX_STEPS)
 CTX_LIMIT = _get_int("CTX_LIMIT", 10000)
 CHAT_TEMP = _get_float("CHAT_TEMP", 0.7)
+MAX_TOKENS = _get_int("MAX_TOKENS", 1200)
+SEED = _get_optional_int("SEED")
+TOP_P = _get_optional_float("TOP_P")
+TOP_K = _get_optional_int("TOP_K")
+MIN_P = _get_optional_float("MIN_P")
+FREQUENCY_PENALTY = _get_optional_float("FREQUENCY_PENALTY")
+PRESENCE_PENALTY = _get_optional_float("PRESENCE_PENALTY")
+REPETITION_PENALTY = _get_optional_float("REPETITION_PENALTY")
 
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN", "")
 DISCORD_PRIMARY_USER_ID = os.getenv("DISCORD_PRIMARY_USER_ID", "").strip()
@@ -126,3 +154,23 @@ def chat_completions_url() -> str:
     if base.endswith("/v1"):
         return f"{base}/chat/completions"
     return f"{base}/v1/chat/completions"
+
+
+def generation_params(
+    temperature: float | None = None,
+    max_tokens: int | None = None,
+) -> dict:
+    params = {
+        "temperature": CHAT_TEMP if temperature is None else temperature,
+        "max_tokens": MAX_TOKENS if max_tokens is None else max_tokens,
+    }
+    optional = {
+        "seed": SEED,
+        "top_p": TOP_P,
+        "top_k": TOP_K,
+        "min_p": MIN_P,
+        "frequency_penalty": FREQUENCY_PENALTY,
+        "presence_penalty": PRESENCE_PENALTY,
+        "repetition_penalty": REPETITION_PENALTY,
+    }
+    return {key: value for key, value in {**params, **optional}.items() if value is not None}

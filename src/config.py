@@ -122,6 +122,8 @@ REASONING = _get_optional_json_or_string("REASONING")
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN", "")
 DISCORD_PRIMARY_USER_ID = os.getenv("DISCORD_PRIMARY_USER_ID", "").strip()
 DISCORD_GUILD_IDS = _get_csv_ints("DISCORD_GUILD_IDS")
+MESSAGE_FIRST_TIMER = _get_optional_int("MESSAGE_FIRST_TIMER")
+MESSAGE_FIRST_CHANNEL_IDS = _get_csv_ints("MESSAGE_FIRST_CHANNEL_IDS")
 HUMAN = os.getenv("HUMAN", "the primary user")
 NAME = os.getenv("NAME", "discord-llm-worker")
 

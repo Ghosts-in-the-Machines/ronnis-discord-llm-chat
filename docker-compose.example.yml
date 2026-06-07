@@ -14,6 +14,8 @@ services:
       # CHARACTER_CARD=/app/character_cards/card.png
       # LOREBOOK_ROOT=/app/lorebooks
       # MEMORY_PROVIDER=local:/app/memory/memories.json
+      # MESSAGE_FIRST_TIMER=30  # prompt only after 30 minutes of channel silence
+      # MESSAGE_FIRST_CHANNEL_IDS=123456789012345678,234567890123456789
     volumes:
       # Discord JSONL chat logs, wake files, worker state, and queued replies.
       - ./data:/app/data

@@ -2,8 +2,12 @@
 !.gitkeep
 
 .env
+!.env.example
 venv/
 .venv/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+
+docker-compose.yml
+docker-compose.override.yml

@@ -3,6 +3,7 @@ import json
 import os
 import re
 import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterator
 
@@ -62,6 +63,44 @@ def load_json(path: str, default: Any) -> Any:
 def append_jsonl_locked(path: str, entry: dict[str, Any]) -> None:
     with locked_file(path, "a+", exclusive=True) as handle:
         handle.write(json.dumps(entry, ensure_ascii=False, default=str) + "\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+
+
+def append_chat_jsonl_locked(
+    path: str,
+    entry: dict[str, Any],
+    archive_root: str | None = None,
+    max_lines: int = 0,
+) -> None:
+    with locked_file(path, "a+", exclusive=True) as handle:
+        handle.write(json.dumps(entry, ensure_ascii=False, default=str) + "\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+
+        if not archive_root or max_lines <= 0:
+            return
+
+        handle.seek(0)
+        lines = handle.readlines()
+        if len(lines) <= max_lines:
+            return
+
+        archive_lines = lines[:-max_lines]
+        keep_lines = lines[-max_lines:]
+        source = Path(path)
+        archive_dir = Path(archive_root)
+        archive_dir.mkdir(parents=True, exist_ok=True)
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+        archive_path = archive_dir / f"{source.stem}.{stamp}.jsonl"
+        with open(archive_path, "w", encoding="utf-8") as archive:
+            archive.writelines(archive_lines)
+            archive.flush()
+            os.fsync(archive.fileno())
+
+        handle.seek(0)
+        handle.truncate()
+        handle.writelines(keep_lines)
         handle.flush()
         os.fsync(handle.fileno())
 

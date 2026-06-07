@@ -14,6 +14,8 @@ if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
 from config import (
+    CHAT_ARCHIVE_MAX_LINES,
+    CHAT_ARCHIVE_ROOT,
     CTX_LIMIT,
     DATA_ROOT,
     DISCORD_BOT_TOKEN,
@@ -26,7 +28,7 @@ from config import (
 try:
     from .utils import (
         _sanitize_discord_text,
-        append_jsonl_locked,
+        append_chat_jsonl_locked,
         atomic_write_json,
         pop_json_queue,
         sanitize_injection,
@@ -34,7 +36,7 @@ try:
 except ImportError:
     from utils import (
         _sanitize_discord_text,
-        append_jsonl_locked,
+        append_chat_jsonl_locked,
         atomic_write_json,
         pop_json_queue,
         sanitize_injection,
@@ -164,7 +166,7 @@ async def on_message(message):
         msg_entry["_primary_user_name"] = HUMAN
 
     try:
-        append_jsonl_locked(_chat_path(chat_id), msg_entry)
+        append_chat_jsonl_locked(_chat_path(chat_id), msg_entry, CHAT_ARCHIVE_ROOT, CHAT_ARCHIVE_MAX_LINES)
         print(
             f"[DISCORD] Ingested chat_id={chat_id} author={msg_entry['_author_name']} "
             f"message_id={msg_entry['_message_id']} path={_chat_path(chat_id)}"

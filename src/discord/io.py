@@ -7,11 +7,24 @@ SRC_ROOT = Path(__file__).resolve().parents[1]
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
-from config import CHARACTER_CARD, CHAT_TEMP, CTX_LIMIT, DATA_ROOT, HUMAN, LOREBOOK_ROOT, MAX_TOKENS
+from config import (
+    ACK_KEYWORD,
+    ACK_MODE,
+    CHARACTER_CARD,
+    CHAT_TEMP,
+    CTX_LIMIT,
+    DATA_ROOT,
+    HUMAN,
+    LOREBOOK_ROOT,
+    MAX_TOKENS,
+    MODEL_CAPABILITY,
+    MODEL_TIER,
+)
 from llm_client import call_llm
 
 try:
     from .character_card import CharacterCard
+    from .decision import normalize_response_decision, resolve_ack_mode, response_format_for_ack_mode
     from .lore_parser import Lorebook
     from .memory import memory_prompt_block
     from .prompting import build_discord_prompt
@@ -19,6 +32,7 @@ try:
     from .utils import read_jsonl
 except ImportError:
     from character_card import CharacterCard
+    from decision import normalize_response_decision, resolve_ack_mode, response_format_for_ack_mode
     from lore_parser import Lorebook
     from memory import memory_prompt_block
     from prompting import build_discord_prompt
@@ -27,6 +41,8 @@ except ImportError:
 
 
 DISCORD_REPLY_CHAR_LIMIT = 3500
+RESOLVED_ACK_MODE = resolve_ack_mode(MODEL_TIER, MODEL_CAPABILITY, ACK_MODE)
+ACK_RESPONSE_FORMAT = response_format_for_ack_mode(RESOLVED_ACK_MODE)
 
 
 def _discord_chat_path(chat_id: str) -> str:
@@ -60,6 +76,8 @@ def _build_discord_generation_messages(chat_id: str, messages: list[dict[str, An
         memories=memories,
         include_decision_instruction=True,
         include_author_id=True,
+        ack_mode=RESOLVED_ACK_MODE,
+        ack_keyword=ACK_KEYWORD,
     )
 
 
@@ -69,7 +87,12 @@ def _call_llm(
     max_tokens: int = MAX_TOKENS,
 ) -> str:
     try:
-        return call_llm(messages, temperature=temperature, max_tokens=max_tokens)
+        return call_llm(
+            messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            response_format=ACK_RESPONSE_FORMAT,
+        )
     except RuntimeError as exc:
         return f"[error: {exc}]"
 
@@ -106,14 +129,16 @@ def discord_chat(
     if not ctx.get("success"):
         return {"success": False, "error": f"Discord read failed: {ctx.get('error')}"}
 
-    content = _trim_discord_reply(
+    decision = normalize_response_decision(
         _call_llm(
             _build_discord_generation_messages(chat_id, ctx.get("messages", [])),
             temperature=temperature,
             max_tokens=max_tokens,
-        )
+        ),
+        ACK_KEYWORD,
     )
-    if not content:
+    content = _trim_discord_reply(decision["content"])
+    if decision["action"] == "ack" or not content:
         return {"success": True, "decision": "acknowledge", "target": chat_id}
 
     queued = queue_reply(chat_id, content)

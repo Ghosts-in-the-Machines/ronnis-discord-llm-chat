@@ -1,4 +1,5 @@
 import os
+import json
 from pathlib import Path
 
 try:
@@ -83,8 +84,25 @@ def _get_csv_ints(name: str) -> list[int]:
     return values
 
 
+def _get_optional_json_or_string(name: str) -> object | None:
+    value = os.getenv(name, "").strip()
+    if not value:
+        return None
+    if value.lower() in {"off", "none", "null", "omit"}:
+        return None
+    try:
+        return json.loads(value)
+    except json.JSONDecodeError:
+        return value
+
+
 DATA_ROOT = os.getenv("DATA_ROOT", "./data")
 Path(DATA_ROOT).mkdir(parents=True, exist_ok=True)
+_raw_chat_archive_root = os.getenv("CHAT_ARCHIVE_ROOT", "").strip()
+CHAT_ARCHIVE_ROOT = _raw_chat_archive_root or str(Path(DATA_ROOT) / "archive")
+CHAT_ARCHIVE_MAX_LINES = _get_int("CHAT_ARCHIVE_MAX_LINES", 5000)
+if CHAT_ARCHIVE_MAX_LINES > 0:
+    Path(CHAT_ARCHIVE_ROOT).mkdir(parents=True, exist_ok=True)
 
 PULSE_INTERVAL = _get_int("PULSE_INTERVAL", 180)
 MAX_STEPS = _get_int("MAX_STEPS", 5)
@@ -99,6 +117,7 @@ MIN_P = _get_optional_float("MIN_P")
 FREQUENCY_PENALTY = _get_optional_float("FREQUENCY_PENALTY")
 PRESENCE_PENALTY = _get_optional_float("PRESENCE_PENALTY")
 REPETITION_PENALTY = _get_optional_float("REPETITION_PENALTY")
+REASONING = _get_optional_json_or_string("REASONING")
 
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN", "")
 DISCORD_PRIMARY_USER_ID = os.getenv("DISCORD_PRIMARY_USER_ID", "").strip()
@@ -109,6 +128,10 @@ NAME = os.getenv("NAME", "discord-llm-worker")
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000").rstrip("/")
 API_KEY = os.getenv("API_KEY", os.getenv("OPENAI_API_KEY", "")).strip()
 MODEL = os.getenv("MODEL", "gpt-4o-mini")
+MODEL_TIER = os.getenv("MODEL_TIER", "auto").strip().lower()
+MODEL_CAPABILITY = os.getenv("MODEL_CAPABILITY", "auto").strip().lower()
+ACK_MODE = os.getenv("ACK_MODE", "auto").strip().lower()
+ACK_KEYWORD = os.getenv("ACK_KEYWORD", "[ACK]").strip() or "[ACK]"
 _raw_api_provider = os.getenv("API_PROVIDER", "auto").strip().lower()
 OPENROUTER_HTTP_REFERER = os.getenv("OPENROUTER_HTTP_REFERER", "https://discord-llm-chat.local").strip()
 OPENROUTER_X_TITLE = os.getenv("OPENROUTER_X_TITLE", "Ronni's Discord LLM Chat").strip()
@@ -198,5 +221,6 @@ def generation_params(
         "frequency_penalty": FREQUENCY_PENALTY,
         "presence_penalty": PRESENCE_PENALTY,
         "repetition_penalty": REPETITION_PENALTY,
+        "reasoning": REASONING,
     }
     return {key: value for key, value in {**params, **optional}.items() if value is not None}

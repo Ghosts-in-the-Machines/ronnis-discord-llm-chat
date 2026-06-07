@@ -33,12 +33,13 @@ Compose reads `.env` through `env_file` and mounts runtime data into the contain
 
 ```text
 ./data -> /app/data
+./chat_archive -> /app/chat_archive
 ./character_cards -> /app/character_cards
 ./lorebooks -> /app/lorebooks
 ./memory -> /app/memory
 ```
 
-For Docker, set mounted paths in `.env`, for example `CHARACTER_CARD=/app/character_cards/card.png`, `LOREBOOK_ROOT=/app/lorebooks`, or `MEMORY_PROVIDER=local:/app/memory/memories.json`.
+For Docker, set mounted paths in `.env`, for example `CHARACTER_CARD=/app/character_cards/card.png`, `LOREBOOK_ROOT=/app/lorebooks`, or `MEMORY_PROVIDER=local:/app/memory/memories.json`. Chat archives default to `/app/data/archive`; set `CHAT_ARCHIVE_ROOT=/app/chat_archive` to use the optional archive volume.
 
 ## How It Works
 
@@ -46,7 +47,7 @@ The Discord handler listens for messages and appends them to local JSONL logs in
 
 The worker polls for wake signals, checks each channel for messages newer than the last processed Discord message ID, builds a prompt, calls your LLM API, and queues replies back to Discord.
 
-Generation settings such as `MAX_TOKENS`, `SEED`, `TOP_P`, `TOP_K`, penalties, character cards, lorebooks, and memory hooks are configured in `.env`.
+Generation settings such as `MAX_TOKENS`, `SEED`, `TOP_P`, `TOP_K`, penalties, `REASONING`, character cards, lorebooks, and memory hooks are configured in `.env`. Leave `REASONING` blank/off/none/omit to omit it, or set `REASONING=false` to send an explicit off value for compatible providers. `ACK_MODE=auto` uses JSON decisions for high/advanced models and an `[ACK]` keyword for standard, low, or quantized models; the worker normalizes either form before deciding whether to send a Discord reply. `CTX_LIMIT` caps the recent Discord transcript characters in the prompt; character cards, lore, and retrieved memories are preserved ahead of that slice.
 
 `API_PROVIDER` can be `openai`, `anthropic`, `openrouter`, or `auto`. `auto` detects `openrouter.ai` as OpenRouter and `api.anthropic.com` as native Anthropic. OpenRouter uses the OpenAI-compatible payload with `HTTP-Referer` and `X-Title` headers from `.env`.
 

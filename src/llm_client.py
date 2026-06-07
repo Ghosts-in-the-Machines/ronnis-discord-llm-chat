@@ -57,11 +57,14 @@ def _openai_compatible_payload(
     messages: list[dict[str, str]],
     temperature: float | None = None,
     max_tokens: int | None = None,
+    response_format: dict | None = None,
 ) -> dict:
     payload = {
         "model": MODEL,
         "messages": messages,
     }
+    if response_format:
+        payload["response_format"] = response_format
     payload.update(generation_params(temperature=temperature, max_tokens=max_tokens))
     return payload
 
@@ -86,8 +89,14 @@ def _call_openai_compatible(
     messages: list[dict[str, str]],
     temperature: float | None = None,
     max_tokens: int | None = None,
+    response_format: dict | None = None,
 ) -> str:
-    payload = _openai_compatible_payload(messages, temperature=temperature, max_tokens=max_tokens)
+    payload = _openai_compatible_payload(
+        messages,
+        temperature=temperature,
+        max_tokens=max_tokens,
+        response_format=response_format,
+    )
     headers = _openai_compatible_headers()
     data = _post_json(chat_completions_url(), payload, headers)
     return _parse_openai_compatible_response(data)
@@ -97,8 +106,14 @@ def _call_openrouter(
     messages: list[dict[str, str]],
     temperature: float | None = None,
     max_tokens: int | None = None,
+    response_format: dict | None = None,
 ) -> str:
-    payload = _openai_compatible_payload(messages, temperature=temperature, max_tokens=max_tokens)
+    payload = _openai_compatible_payload(
+        messages,
+        temperature=temperature,
+        max_tokens=max_tokens,
+        response_format=response_format,
+    )
     headers = _openai_compatible_headers(
         {
             "HTTP-Referer": OPENROUTER_HTTP_REFERER,
@@ -113,6 +128,7 @@ def _call_anthropic(
     messages: list[dict[str, str]],
     temperature: float | None = None,
     max_tokens: int | None = None,
+    response_format: dict | None = None,
 ) -> str:
     system, chat_messages = _split_system_messages(messages)
     payload = {
@@ -142,6 +158,7 @@ def call_llm(
     messages: list[dict[str, str]],
     temperature: float | None = None,
     max_tokens: int | None = None,
+    response_format: dict | None = None,
 ) -> str:
     provider_map = {
         "openai": _call_openai_compatible,
@@ -150,7 +167,12 @@ def call_llm(
     }
     try:
         caller = provider_map.get(API_PROVIDER, _call_openai_compatible)
-        return caller(messages, temperature=temperature, max_tokens=max_tokens)
+        return caller(
+            messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            response_format=response_format,
+        )
     except urllib.error.HTTPError as exc:
         detail = _read_error(exc)
         raise RuntimeError(f"LLM endpoint returned HTTP {exc.code}: {detail}") from exc

@@ -7,6 +7,33 @@ def _tail(text: str, limit: int) -> str:
     return text[-limit:]
 
 
+def _speaker_kind(msg: dict[str, Any]) -> str:
+    role = msg.get("role", "user")
+    if role == "assistant":
+        return "bridge"
+    if msg.get("_message_first_timer"):
+        return "timer"
+    if msg.get("_is_primary_user"):
+        return "primary_user"
+    if msg.get("_author_is_bot"):
+        return "discord_bot"
+    return "discord_user"
+
+
+def _format_transcript_line(msg: dict[str, Any], include_author_id: bool) -> str:
+    speaker = _speaker_kind(msg)
+    author = msg.get("_author_name") or speaker
+    status = msg.get("status", "unknown")
+    body = str(msg.get("content", ""))
+    parts = ["discord_event", f"speaker={speaker}", f"name={author}"]
+    if include_author_id:
+        author_id = msg.get("_author_id") or "unknown"
+        parts.extend([f"user_id={author_id}", f"status={status}"])
+    elif status != "unknown":
+        parts.append(f"status={status}")
+    return "".join(f"[{part}]" for part in parts) + f" {body}"
+
+
 def build_discord_prompt(
     chat_id: str,
     messages: list[dict[str, Any]],
@@ -23,15 +50,7 @@ def build_discord_prompt(
 ) -> list[dict[str, str]]:
     transcript_lines = []
     for msg in messages:
-        role = msg.get("role", "user")
-        author = msg.get("_author_name") or role
-        status = msg.get("status", "unknown")
-        body = str(msg.get("content", ""))
-        if include_author_id:
-            author_id = msg.get("_author_id") or "unknown"
-            transcript_lines.append(f"[{role}][{author}][user_id={author_id}][status={status}] {body}")
-        else:
-            transcript_lines.append(f"[{role}][{author}] {body}")
+        transcript_lines.append(_format_transcript_line(msg, include_author_id))
 
     transcript = "\n".join(transcript_lines)
     reference_blocks = [f"Discord chat_id: {chat_id}"]
@@ -80,9 +99,10 @@ def build_discord_prompt(
         "reference material, not active chat turns. Do not respond to reference material directly. "
         "When a character card is supplied, keep that card's identity, voice, boundaries, and scenario "
         "ahead of any conflicting persona cues in the Discord transcript. "
+        "In Recent conversation, speaker=bridge marks your prior Discord replies; speaker=discord_bot "
+        "marks other bots or characters in the channel, not you. "
         f"{decision}{style}"
         f"If a message is from the primary user, treat that account as {human}. "
-        "Return an empty string when no reply is needed."
     )
     return [
         {"role": "system", "content": system},

@@ -68,6 +68,7 @@ def build_discord_prompt(
             "\n\nActive persona reminder: continue using the CHARACTER CARD as the stable identity, "
             "voice, boundaries, and scenario. Do not adopt another speaker's persona, archetype, "
             "goals, or writing style from the transcript unless the card explicitly allows it."
+            "Do not use tags or internal reasoning blocks."
         )
 
     user_content = "\n\n".join(reference_blocks)

@@ -134,6 +134,7 @@ MODEL_TIER = os.getenv("MODEL_TIER", "auto").strip().lower()
 MODEL_CAPABILITY = os.getenv("MODEL_CAPABILITY", "auto").strip().lower()
 ACK_MODE = os.getenv("ACK_MODE", "auto").strip().lower()
 ACK_KEYWORD = os.getenv("ACK_KEYWORD", "[ACK]").strip() or "[ACK]"
+PROMPT_MODE = os.getenv("PROMPT_MODE", "auto").strip().lower()
 _raw_api_provider = os.getenv("API_PROVIDER", "auto").strip().lower()
 OPENROUTER_HTTP_REFERER = os.getenv("OPENROUTER_HTTP_REFERER", "https://discord-llm-chat.local").strip()
 OPENROUTER_X_TITLE = os.getenv("OPENROUTER_X_TITLE", "Ronni's Discord LLM Chat").strip()

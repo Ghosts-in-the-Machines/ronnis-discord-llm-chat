@@ -47,6 +47,7 @@ def build_discord_prompt(
     include_author_id: bool = False,
     ack_mode: str = "none",
     ack_keyword: str = "[ACK]",
+    prompt_mode: str = "auto",
 ) -> list[dict[str, str]]:
     transcript_lines = []
     for msg in messages:
@@ -74,23 +75,29 @@ def build_discord_prompt(
 
     decision = ""
     style = "Reply naturally and concisely. "
-    if include_decision_instruction or ack_mode in {"json", "keyword"}:
+    direct_mode = str(prompt_mode or "").strip().lower() == "direct"
+    if direct_mode:
+        style = (
+            "Continue the Discord conversation as the active character. Output only the Discord reply text. "
+            "Do not include analysis, plans, hidden reasoning, thinking blocks, or notes about what you will do. "
+        )
+    elif include_decision_instruction or ack_mode in {"json", "keyword"}:
         decision = (
             "Decide whether a reply is needed. Reply only when the conversation addresses you, "
             "clearly invites your character in, or needs your direct response. Do not reply merely "
             "because other bots or characters are talking nearby. "
         )
-    if ack_mode == "json":
+    if not direct_mode and ack_mode == "json":
         style = (
             'Return only JSON matching {"action":"reply","content":"..."} or '
             '{"action":"ack","content":""}. Use action "ack" when no Discord message should be sent. '
         )
-    elif ack_mode == "keyword":
+    elif not direct_mode and ack_mode == "keyword":
         style = (
             f"Return exactly {ack_keyword} when no Discord message should be sent. "
             "Otherwise return only the Discord reply text. "
         )
-    elif include_decision_instruction:
+    elif not direct_mode and include_decision_instruction:
         style = "Return only the Discord reply text. "
     system = (
         "You are replying to a Discord conversation through a standalone Discord LLM bridge. "

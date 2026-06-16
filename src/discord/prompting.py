@@ -68,7 +68,6 @@ def build_discord_prompt(
             "\n\nActive persona reminder: continue using the CHARACTER CARD as the stable identity, "
             "voice, boundaries, and scenario. Do not adopt another speaker's persona, archetype, "
             "goals, or writing style from the transcript unless the card explicitly allows it."
-            "Do not use tags or internal reasoning blocks."
         )
 
     user_content = "\n\n".join(reference_blocks)
@@ -84,9 +83,8 @@ def build_discord_prompt(
         )
     elif include_decision_instruction or ack_mode in {"json", "keyword"}:
         decision = (
-            "Decide whether a reply is needed. Reply only when the conversation addresses you, "
-            "clearly invites your character in, or needs your direct response. Do not reply merely "
-            "because other bots or characters are talking nearby. "
+            "Reply to the conversation it is natural to do so, such as when addressed or if you have something to add."
+            "If a reply isn't needed, you can choose to stay quiet this turn."
         )
     if not direct_mode and ack_mode == "json":
         style = (

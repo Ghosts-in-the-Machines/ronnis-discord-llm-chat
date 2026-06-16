@@ -1,5 +1,6 @@
 import json
 import re
+import ssl
 import urllib.error
 import urllib.request
 
@@ -59,6 +60,20 @@ def _anthropic_generation_params(
 
 def _read_error(exc: urllib.error.HTTPError) -> str:
     return exc.read().decode("utf-8", errors="replace")
+
+
+def _format_url_error(exc: urllib.error.URLError) -> str:
+    reason = getattr(exc, "reason", exc)
+    detail = str(reason)
+    url = chat_completions_url()
+    if isinstance(reason, ssl.SSLError) and "WRONG_VERSION_NUMBER" in detail:
+        return (
+            f"LLM endpoint TLS handshake failed for {url}: {detail}. "
+            "This usually means API_BASE_URL is using https:// for a local server that speaks plain HTTP. "
+            "Use http:// for local OpenAI-compatible servers; from Docker, localhost is the container, "
+            "so use host.docker.internal or a Compose service name when the model server is outside the bot container."
+        )
+    return f"LLM endpoint connection failed for {url}: {detail}"
 
 
 def strip_thinking_blocks(text: str) -> str:
@@ -223,3 +238,5 @@ def call_llm(
     except urllib.error.HTTPError as exc:
         detail = _read_error(exc)
         raise RuntimeError(f"LLM endpoint returned HTTP {exc.code}: {detail}") from exc
+    except urllib.error.URLError as exc:
+        raise RuntimeError(_format_url_error(exc)) from exc

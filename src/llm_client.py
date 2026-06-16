@@ -121,6 +121,16 @@ def _parse_openai_compatible_response(data: dict) -> str:
     return strip_thinking_blocks(choices[0].get("message", {}).get("content", ""))
 
 
+def _normalize_openrouter_payload(payload: dict) -> dict:
+    payload = dict(payload)
+    reasoning = payload.get("reasoning")
+    if isinstance(reasoning, bool):
+        payload.pop("reasoning", None)
+    elif isinstance(reasoning, str):
+        payload["reasoning"] = {"effort": reasoning}
+    return payload
+
+
 def _call_openai_compatible(
     messages: list[dict[str, str]],
     temperature: float | None = None,
@@ -150,6 +160,7 @@ def _call_openrouter(
         max_tokens=max_tokens,
         response_format=response_format,
     )
+    payload = _normalize_openrouter_payload(payload)
     headers = _openai_compatible_headers(
         {
             "HTTP-Referer": OPENROUTER_HTTP_REFERER,

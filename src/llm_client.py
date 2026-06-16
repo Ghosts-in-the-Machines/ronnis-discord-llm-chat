@@ -1,4 +1,5 @@
 import json
+import re
 import urllib.error
 import urllib.request
 
@@ -6,11 +7,29 @@ from config import (
     API_KEY,
     API_PROVIDER,
     MODEL,
+    OPENAI_EXTRA_BODY,
     OPENROUTER_HTTP_REFERER,
     OPENROUTER_X_TITLE,
+    STRIP_THINKING_BLOCKS,
     anthropic_messages_url,
     chat_completions_url,
     generation_params,
+)
+
+
+_THINKING_BLOCK_PATTERNS = [
+    re.compile(
+        r"<\s*(think|thinking|reasoning|analysis)\s*>.*?<\s*/\s*\1\s*>",
+        flags=re.IGNORECASE | re.DOTALL,
+    ),
+    re.compile(
+        r"\[\s*(think|thinking|reasoning|analysis)\s*\].*?\[\s*/\s*\1\s*\]",
+        flags=re.IGNORECASE | re.DOTALL,
+    ),
+]
+_UNCLOSED_THINKING_AT_START = re.compile(
+    r"^\s*(?:<\s*(?:think|thinking|reasoning|analysis)\s*>|\[\s*(?:think|thinking|reasoning|analysis)\s*\]).*",
+    flags=re.IGNORECASE | re.DOTALL,
 )
 
 
@@ -42,6 +61,20 @@ def _read_error(exc: urllib.error.HTTPError) -> str:
     return exc.read().decode("utf-8", errors="replace")
 
 
+def strip_thinking_blocks(text: str) -> str:
+    cleaned = str(text or "")
+    if not STRIP_THINKING_BLOCKS:
+        return cleaned.strip()
+    previous = None
+    while cleaned != previous:
+        previous = cleaned
+        for pattern in _THINKING_BLOCK_PATTERNS:
+            cleaned = pattern.sub("", cleaned)
+    cleaned = _UNCLOSED_THINKING_AT_START.sub("", cleaned)
+    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+    return cleaned.strip()
+
+
 def _post_json(url: str, payload: dict, headers: dict[str, str]) -> dict:
     request = urllib.request.Request(
         url,
@@ -66,6 +99,9 @@ def _openai_compatible_payload(
     if response_format:
         payload["response_format"] = response_format
     payload.update(generation_params(temperature=temperature, max_tokens=max_tokens))
+    for key, value in OPENAI_EXTRA_BODY.items():
+        if key not in {"model", "messages"}:
+            payload[key] = value
     return payload
 
 
@@ -82,7 +118,7 @@ def _parse_openai_compatible_response(data: dict) -> str:
     choices = data.get("choices", [])
     if not choices:
         return ""
-    return str(choices[0].get("message", {}).get("content", "")).strip()
+    return strip_thinking_blocks(choices[0].get("message", {}).get("content", ""))
 
 
 def _call_openai_compatible(
@@ -151,7 +187,7 @@ def _call_anthropic(
     for block in data.get("content", []):
         if isinstance(block, dict) and block.get("type") == "text":
             parts.append(str(block.get("text", "")))
-    return "".join(parts).strip()
+    return strip_thinking_blocks("".join(parts))
 
 
 def call_llm(

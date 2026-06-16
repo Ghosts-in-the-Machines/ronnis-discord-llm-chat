@@ -88,12 +88,22 @@ def _get_optional_json_or_string(name: str) -> object | None:
     value = os.getenv(name, "").strip()
     if not value:
         return None
-    if value.lower() in {"off", "none", "null", "omit"}:
+    lowered = value.lower()
+    if lowered in {"off", "none", "null", "omit"}:
         return None
+    if lowered in {"false", "no", "n", "0"}:
+        return False
+    if lowered in {"true", "yes", "y", "1", "on"}:
+        return True
     try:
         return json.loads(value)
     except json.JSONDecodeError:
         return value
+
+
+def _get_optional_json_object(name: str) -> dict:
+    value = _get_optional_json_or_string(name)
+    return value if isinstance(value, dict) else {}
 
 
 DATA_ROOT = os.getenv("DATA_ROOT", "./data")
@@ -118,6 +128,8 @@ FREQUENCY_PENALTY = _get_optional_float("FREQUENCY_PENALTY")
 PRESENCE_PENALTY = _get_optional_float("PRESENCE_PENALTY")
 REPETITION_PENALTY = _get_optional_float("REPETITION_PENALTY")
 REASONING = _get_optional_json_or_string("REASONING")
+OPENAI_EXTRA_BODY = _get_optional_json_object("OPENAI_EXTRA_BODY")
+STRIP_THINKING_BLOCKS = _get_bool("STRIP_THINKING_BLOCKS", True)
 
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN", "")
 DISCORD_PRIMARY_USER_ID = os.getenv("DISCORD_PRIMARY_USER_ID", "").strip()

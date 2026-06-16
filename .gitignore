@@ -2,6 +2,7 @@
 !.gitkeep
 
 .env
+.env.or
 !.env.example
 venv/
 .venv/

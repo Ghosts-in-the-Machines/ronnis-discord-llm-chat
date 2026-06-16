@@ -1,5 +1,7 @@
 from typing import Any
 
+from config import REASONING
+
 
 def _tail(text: str, limit: int) -> str:
     if limit <= 0:
@@ -84,7 +86,6 @@ def build_discord_prompt(
     elif include_decision_instruction or ack_mode in {"json", "keyword"}:
         decision = (
             "Reply to the conversation it is natural to do so, such as when addressed or if you have something to add."
-            "If a reply isn't needed, you can choose to stay quiet this turn."
         )
     if not direct_mode and ack_mode == "json":
         style = (
@@ -110,6 +111,8 @@ def build_discord_prompt(
         f"{decision}{style}"
         f"If a message is from the primary user, treat that account as {human}. "
     )
+    if REASONING != True:
+        system = system + "Output only direct dialogue and narration. Never preface or annotate your responses with internal commentary or reflection."
     return [
         {"role": "system", "content": system},
         {"role": "user", "content": user_content},

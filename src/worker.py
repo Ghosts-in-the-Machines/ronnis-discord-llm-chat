@@ -26,7 +26,6 @@ from config import (
     MODEL_CAPABILITY,
     MODEL_TIER,
     NAME,
-    PROMPT_MODE,
     PULSE_BUDGET,
     PULSE_INTERVAL,
 )
@@ -58,8 +57,7 @@ STATE_LOCK_FILE = os.path.join(DATA_ROOT, ".worker_state.lock")
 WAKE_PATH = os.path.join(DATA_ROOT, ".discord_wake")
 QUEUE_PATH = os.path.join(DATA_ROOT, ".discord_replies.json")
 RESOLVED_ACK_MODE = resolve_ack_mode(MODEL_TIER, MODEL_CAPABILITY, ACK_MODE)
-EFFECTIVE_ACK_MODE = "none" if PROMPT_MODE == "direct" else RESOLVED_ACK_MODE
-ACK_RESPONSE_FORMAT = response_format_for_ack_mode(EFFECTIVE_ACK_MODE)
+ACK_RESPONSE_FORMAT = response_format_for_ack_mode(RESOLVED_ACK_MODE)
 
 _running = True
 
@@ -143,9 +141,8 @@ def _build_prompt(
         character=character,
         lore=lore,
         memories=memories,
-        ack_mode=EFFECTIVE_ACK_MODE,
+        ack_mode=RESOLVED_ACK_MODE,
         ack_keyword=ACK_KEYWORD,
-        prompt_mode=PROMPT_MODE,
     )
 
 

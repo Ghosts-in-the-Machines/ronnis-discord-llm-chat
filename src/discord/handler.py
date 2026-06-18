@@ -27,7 +27,6 @@ from config import (
     MESSAGE_FIRST_TIMER,
     MODEL_CAPABILITY,
     MODEL_TIER,
-    PROMPT_MODE,
     REPLY_TO_BOTS,
     get_discord_guild_ids,
 )
@@ -59,7 +58,6 @@ WAKE_PATH = os.path.join(DATA_ROOT, ".discord_wake")
 DISCORD_MESSAGE_LIMIT = min(3900, max(1000, int(CTX_LIMIT * 0.75)))
 DISCORD_SAFE_CHUNK = 3900
 RESOLVED_ACK_MODE = resolve_ack_mode(MODEL_TIER, MODEL_CAPABILITY, ACK_MODE)
-EFFECTIVE_ACK_MODE = "none" if PROMPT_MODE == "direct" else RESOLVED_ACK_MODE
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -114,7 +112,7 @@ def _visible_message_first_channels() -> list[discord.TextChannel]:
 
 
 def _message_first_prompt() -> str:
-    if EFFECTIVE_ACK_MODE == "json":
+    if RESOLVED_ACK_MODE == "json":
         return (
             "MESSAGE_FIRST_TIMER:\n"
             "This Discord channel has been silent for the configured interval. "

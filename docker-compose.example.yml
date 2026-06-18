@@ -6,7 +6,7 @@ services:
     image: discord-llm-chat:latest
     restart: unless-stopped
     env_file:
-      - .env
+      - ${ENV_FILE:-.env}
     environment:
       DATA_ROOT: /app/data
       CHAT_ARCHIVE_ROOT: ${CHAT_ARCHIVE_ROOT:-/app/data/archive}
@@ -18,9 +18,9 @@ services:
       # MESSAGE_FIRST_CHANNEL_IDS=123456789012345678,234567890123456789
     volumes:
       # Discord JSONL chat logs, wake files, worker state, and queued replies.
-      - ./data:/app/data
+      - ${DATA_DIR:-./data}:/app/data
       # Optional external archive target. Set CHAT_ARCHIVE_ROOT=/app/chat_archive in .env to use it.
-      - ./chat_archive:/app/chat_archive
+      - ${CHAT_ARCHIVE_DIR:-./chat_archive}:/app/chat_archive
       # Optional SillyTavern character card JSON or PNG files.
       - ./character_cards:/app/character_cards:ro
       # Optional lorebook JSON files.

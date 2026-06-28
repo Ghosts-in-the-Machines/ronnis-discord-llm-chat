@@ -96,6 +96,15 @@ def _chat_path(chat_id: str) -> str:
     return os.path.join(DATA_ROOT, f"{chat_id}.jsonl")
 
 
+def _guild_channel_metadata(guild: discord.Guild, channel: discord.abc.GuildChannel) -> dict[str, str]:
+    return {
+        "_guild_id": str(guild.id),
+        "_guild_name": sanitize_injection(guild.name),
+        "_channel_id": str(channel.id),
+        "_channel_name": sanitize_injection(getattr(channel, "name", str(channel.id))),
+    }
+
+
 def _visible_message_first_channels() -> list[discord.TextChannel]:
     channels = []
     configured_ids = set(MESSAGE_FIRST_CHANNEL_IDS)
@@ -197,8 +206,8 @@ async def _message_first_loop() -> None:
             "_author_id": "MESSAGE_FIRST_TIMER",
             "_author_name": "MESSAGE_FIRST_TIMER",
             "_author_is_bot": True,
-            "_channel_id": str(channel.id),
             "_message_first_timer": True,
+            **_guild_channel_metadata(channel.guild, channel),
         }
         try:
             append_chat_jsonl_locked(_chat_path(chat_id), msg_entry, CHAT_ARCHIVE_ROOT, CHAT_ARCHIVE_MAX_LINES)
@@ -292,8 +301,8 @@ async def on_message(message):
         "_author_id": author_id,
         "_author_name": sanitize_injection(message.author.display_name),
         "_author_is_bot": bool(message.author.bot),
-        "_channel_id": str(message.channel.id),
         "_is_primary_user": is_primary_user,
+        **_guild_channel_metadata(message.guild, message.channel),
     }
     if is_primary_user:
         msg_entry["_primary_user_name"] = HUMAN

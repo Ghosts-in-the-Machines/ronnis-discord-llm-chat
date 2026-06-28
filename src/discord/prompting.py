@@ -22,17 +22,54 @@ def _speaker_kind(msg: dict[str, Any]) -> str:
     return "discord_user"
 
 
-def _format_transcript_line(msg: dict[str, Any], include_author_id: bool) -> str:
+def _tag_value(value: object) -> str:
+    return str(value).replace("[", "(").replace("]", ")").replace("\r", " ").replace("\n", " ")
+
+
+def _first_present(messages: list[dict[str, Any]], key: str) -> str | None:
+    for msg in reversed(messages):
+        value = msg.get(key)
+        if value:
+            return str(value)
+    return None
+
+
+def _conversation_context(messages: list[dict[str, Any]]) -> dict[str, str]:
+    context = {}
+    for key in ("_guild_id", "_guild_name", "_channel_id", "_channel_name"):
+        value = _first_present(messages, key)
+        if value:
+            context[key] = value
+    return context
+
+
+def _format_transcript_line(
+    msg: dict[str, Any],
+    include_author_id: bool,
+    conversation_context: dict[str, str],
+) -> str:
     speaker = _speaker_kind(msg)
     author = msg.get("_author_name") or speaker
     status = msg.get("status", "unknown")
     body = str(msg.get("content", ""))
-    parts = ["discord_event", f"speaker={speaker}", f"name={author}"]
+    parts = ["discord_event", f"speaker={_tag_value(speaker)}", f"name={_tag_value(author)}"]
+    channel_id = msg.get("_channel_id") or conversation_context.get("_channel_id")
+    channel_name = msg.get("_channel_name") or conversation_context.get("_channel_name")
+    guild_id = msg.get("_guild_id") or conversation_context.get("_guild_id")
+    guild_name = msg.get("_guild_name") or conversation_context.get("_guild_name")
+    if guild_id:
+        parts.append(f"guild_id={_tag_value(guild_id)}")
+    if guild_name:
+        parts.append(f"guild_name={_tag_value(guild_name)}")
+    if channel_id:
+        parts.append(f"channel_id={_tag_value(channel_id)}")
+    if channel_name:
+        parts.append(f"channel_name={_tag_value(channel_name)}")
     if include_author_id:
         author_id = msg.get("_author_id") or "unknown"
-        parts.extend([f"user_id={author_id}", f"status={status}"])
+        parts.extend([f"user_id={_tag_value(author_id)}", f"status={_tag_value(status)}"])
     elif status != "unknown":
-        parts.append(f"status={status}")
+        parts.append(f"status={_tag_value(status)}")
     return "".join(f"[{part}]" for part in parts) + f" {body}"
 
 
@@ -51,11 +88,23 @@ def build_discord_prompt(
     ack_keyword: str = "[ACK]",
 ) -> list[dict[str, str]]:
     transcript_lines = []
+    conversation_context = _conversation_context(messages)
     for msg in messages:
-        transcript_lines.append(_format_transcript_line(msg, include_author_id))
+        transcript_lines.append(_format_transcript_line(msg, include_author_id, conversation_context))
 
     transcript = "\n".join(transcript_lines)
     reference_blocks = [f"Discord chat_id: {chat_id}"]
+    channel_summary = []
+    if conversation_context.get("_guild_id"):
+        channel_summary.append(f"guild_id={_tag_value(conversation_context['_guild_id'])}")
+    if conversation_context.get("_guild_name"):
+        channel_summary.append(f"guild_name={_tag_value(conversation_context['_guild_name'])}")
+    if conversation_context.get("_channel_id"):
+        channel_summary.append(f"channel_id={_tag_value(conversation_context['_channel_id'])}")
+    if conversation_context.get("_channel_name"):
+        channel_summary.append(f"channel_name={_tag_value(conversation_context['_channel_name'])}")
+    if channel_summary:
+        reference_blocks.append("Discord channel: " + " ".join(channel_summary))
     if character:
         reference_blocks.append(character)
     if lore:

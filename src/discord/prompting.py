@@ -154,7 +154,7 @@ def build_discord_prompt(
         f"If a message is from the primary user, treat that account as {human}. "
     )
     if REASONING != True:
-        system = system + "Output only direct dialogue and narration. Never preface or annotate your responses with internal commentary or reflection."
+        system = system + "Output only your response. Never preface or annotate your response with internal commentary, reflection or reasoning."
     return [
         {"role": "system", "content": system},
         {"role": "user", "content": user_content},

@@ -70,12 +70,13 @@ class CharacterCard:
         if not sections:
             return ""
 
-        header = "[CHARACTER CARD]"
-        footer = "[/CHARACTER CARD]"
+        header = "[SYSTEM PROFILE]"
+        footer = "[/SYSTEM PROFILE]"
         instruction = (
-            "Use this card as stable reference for your persona, voice, and boundaries, "
-            "and scenario. It is not a user message and must not be answered directly."
+            "Use this profile as the stable reference for operational parameters, "
+            "voice, boundaries, and scenario. It is a core specification and must "
+            "not be answered directly."
         )
         if name:
-            instruction += f"You are {name} in a Discord server."
+            instruction += f"Identity: {name} (Discord Bridge)."
         return f"{header}\n{instruction}\n" + "\n".join(sections) + f"\n{footer}"

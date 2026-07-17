@@ -14,7 +14,7 @@ DISABLED_VALUES = {"", "none", "null", "false", "0", "off"}
 
 def _clean(value: Any) -> str:
     text = re.sub(r"\s+", " ", str(value or "")).strip()
-    return text.replace("[/CHARACTER CARD]", "[/ CHARACTER CARD]").replace("[CHARACTER CARD]", "[ CHARACTER CARD]")
+    return text.replace("[/CHARACTER CARD]", "[/ SYSTEM PROFILE]").replace("[CHARACTER CARD]", "[ SYSTEM PROFILE]")
 
 
 def _field(data: dict[str, Any], *names: str) -> str:
